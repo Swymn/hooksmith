@@ -1,19 +1,9 @@
-use std::{
-    fs,
-    os::unix::fs::PermissionsExt,
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::{ fs, path::{ Path, PathBuf }, process::Command };
 
-use crate::{
-    config::Config,
-    error::{HooksmithError, Result},
-};
+use crate::{ config::Config, error::{ HooksmithError, Result } };
 
 pub fn find_git_root() -> Result<PathBuf> {
-    let output = Command::new("git")
-        .args(["rev-parse", "--show-toplevel"])
-        .output()?;
+    let output = Command::new("git").args(["rev-parse", "--show-toplevel"]).output()?;
 
     if !output.status.success() {
         return Err(crate::error::HooksmithError::NoGitRepo);
@@ -34,9 +24,14 @@ pub fn install_hook(git_root: &Path, hook_name: &str) -> Result<()> {
     fs::write(&hook_path, script)?;
 
     // Change permission to make hook executable (required by git)
-    let mut perms = fs::metadata(&hook_path)?.permissions();
-    perms.set_mode(0o755);
-    fs::set_permissions(&hook_path, perms)?;
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        let mut perms = fs::metadata(&hook_path)?.permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(&hook_path, perms)?;
+    }
 
     println!("✓ Hook '{hook_name}' installed.");
 
@@ -72,12 +67,12 @@ mod tests {
 
     fn config_with_commands(hook: &str, commands: &[&str]) -> Config {
         let mut config = Config::default();
-        config.hooks.insert(
-            hook.to_string(),
-            HookConfig {
-                commands: commands.iter().map(|s| s.to_string()).collect(),
-            },
-        );
+        config.hooks.insert(hook.to_string(), HookConfig {
+            commands: commands
+                .iter()
+                .map(|s| s.to_string())
+                .collect(),
+        });
 
         config
     }
@@ -156,28 +151,19 @@ mod tests {
         let result = run_hook("pre-commit", &config);
 
         // THEN the result should be an error
-        assert!(matches!(
-            result,
-            Err(HooksmithError::CommandFailed { code: 1, .. })
-        ));
+        assert!(matches!(result, Err(HooksmithError::CommandFailed { code: 1, .. })));
     }
 
     #[test]
     fn should_run_command_for_the_correct_hook_only() {
         // GIVEN config
         let mut config = Config::default();
-        config.hooks.insert(
-            "pre-commit".to_string(),
-            HookConfig {
-                commands: vec!["true".to_string()],
-            },
-        );
-        config.hooks.insert(
-            "pre-push".to_string(),
-            HookConfig {
-                commands: vec!["false".to_string()],
-            },
-        );
+        config.hooks.insert("pre-commit".to_string(), HookConfig {
+            commands: vec!["true".to_string()],
+        });
+        config.hooks.insert("pre-push".to_string(), HookConfig {
+            commands: vec!["false".to_string()],
+        });
 
         // WHEN running hook
         let result = run_hook("pre-commit", &config);
