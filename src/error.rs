@@ -19,6 +19,9 @@ pub enum HooksmithError {
 
     #[error("Command {command} failed with code {code}")]
     CommandFailed { command: String, code: i32 },
+
+    #[error("Missing Hook ({0})")]
+    MissingHook(String),
 }
 
 pub type Result<T> = result::Result<T, HooksmithError>;

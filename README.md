@@ -28,6 +28,18 @@ tar -xzf hooksmith-v0.1.0-aarch64-apple-darwin.tar.gz
 mv hooksmith /usr/local/bin/
 ```
 
+### Auto completions
+
+1. Create the folder if missing
+mkdir -p ~/.zsh/completions
+
+2. Create the script in a dedicated file
+hooksmith completions zsh > ~/.zsh/completions/_hooksmith
+
+3. Inside your .zshrc, ajoute add these two lines
+fpath=(~/.zsh/completions $fpath)
+autoload -Uz compinit && compinit
+
 ## Quick start
 
 ```sh

@@ -47,6 +47,14 @@ pub fn install_hook(git_root: &Path, hook_name: &str) -> Result<()> {
     Ok(())
 }
 
+pub fn remove_hook(git_root: &Path, hook_name: &str) -> Result<()> {
+    let hook_path = git_root.join(".git/hooks").join(hook_name);
+
+    fs::remove_file(hook_path)?;
+
+    Ok(())
+}
+
 pub fn run_hook(hook_name: &str, config: &Config) -> Result<()> {
     let Some(hook_config) = config.hooks.get(hook_name) else {
         return Ok(());

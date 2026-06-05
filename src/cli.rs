@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use clap_complete::Shell;
 
 #[derive(Parser)]
 #[command(name = "hooksmith", about = "Git hooks manager", version)]
@@ -20,9 +21,19 @@ pub enum Commands {
         command: String,
     },
 
+    /// Remove a hook
+    Remove { hook: String },
+
     /// Execute commands of a specific hook
     Run { hook: String },
 
     /// Display current config
     Status,
+
+    #[command(hide = true)]
+    Completions {
+        /// Shell cible
+        #[arg(value_enum)]
+        shell: Shell,
+    },
 }

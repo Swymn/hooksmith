@@ -1,6 +1,7 @@
-use std::process;
+use std::{io, process};
 
-use clap::Parser;
+use clap::{CommandFactory, Parser};
+use clap_complete::generate;
 
 use crate::{
     cli::{Cli, Commands},
@@ -45,6 +46,12 @@ fn run() -> error::Result<()> {
             hooks::install_hook(&git_root, &hook)?;
             println!("✓ Command added.");
         }
+        Commands::Remove { hook } => {
+            config.remove_hook(&hook)?;
+            config.save(&git_root)?;
+            hooks::remove_hook(&git_root, &hook)?;
+            println!("✓ Hook removed.");
+        }
         Commands::Run { hook } => {
             hooks::run_hook(&hook, &config)?;
         }
@@ -59,6 +66,11 @@ fn run() -> error::Result<()> {
                     }
                 }
             }
+        }
+        Commands::Completions { shell } => {
+            // Génère le script sur stdout — l'utilisateur redirige lui-même
+            // vers son fichier de config shell
+            generate(shell, &mut Cli::command(), "hooksmith", &mut io::stdout());
         }
     }
 

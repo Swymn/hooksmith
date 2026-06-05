@@ -47,6 +47,19 @@ impl Config {
         Ok(())
     }
 
+    /// Remove a hook
+    pub fn remove_hook(&mut self, hook: &str) -> Result<()> {
+        if !VALID_HOOKS.contains(&hook) {
+            return Err(HooksmithError::UnknownHook(hook.to_string()));
+        }
+
+        if let None = self.hooks.remove(hook) {
+            return Err(HooksmithError::MissingHook(hook.to_string()));
+        }
+
+        Ok(())
+    }
+
     /// Should save the configuration into .hooksmithfile.toml from the project
     pub fn save(&self, project_root: &Path) -> Result<()> {
         let path = project_root.join(CONFIG_FILE);
@@ -174,5 +187,32 @@ mod tests {
             config.hooks["pre-commit"].commands,
             reloaded.hooks["pre-commit"].commands
         );
+    }
+
+    #[test]
+    fn should_remove_hook_from_config() {
+        // GIVEN a config with one hook
+        let mut config = Config::default();
+        config
+            .add_command("pre-commit", "cargo test".to_string())
+            .unwrap();
+
+        // WHEN removing the hook
+        config.remove_hook("pre-commit").unwrap();
+
+        // THEN the config should no longer contains hook
+        assert_eq!(0, config.hooks.len());
+    }
+
+    #[test]
+    fn should_reject_remove_from_config_missing_hook() {
+        // GIVEN a config with no hook
+        let mut config = Config::default();
+
+        // WHEN removing the hook
+        let result = config.remove_hook("pre-commit");
+
+        // THEN the result should contains an error
+        assert!(matches!(result, Err(HooksmithError::MissingHook(_))));
     }
 }
