@@ -1,34 +1,52 @@
-use std::{path::PathBuf, process};
+use std::process;
 
 use clap::Parser;
 
-use crate::{cli::{Cli, Commands}, config::Config};
+use crate::{
+    cli::{Cli, Commands},
+    config::Config,
+    error::HooksmithError,
+    hooks::find_git_root,
+};
 
+pub mod cli;
 pub mod config;
 pub mod error;
-pub mod cli;
+pub mod hooks;
 
 fn main() {
-    if let Err(e) = run() {
-        eprintln!("{e}");
-        process::exit(1);
+    match run() {
+        Err(HooksmithError::CommandFailed { code, .. }) => {
+            process::exit(code);
+        }
+        Err(e) => {
+            eprintln!("{e}");
+            process::exit(1);
+        }
+        _ => {}
     }
 }
 
 fn run() -> error::Result<()> {
     let cli = Cli::parse();
-    let git_root = PathBuf::from("./");
+    let git_root = find_git_root()?;
     let mut config = Config::load(&git_root)?;
 
     match cli.command {
         Commands::Init => {
+            for hook_name in config.hooks.keys() {
+                hooks::install_hook(&git_root, hook_name)?;
+            }
             println!("✓ Hooksmith initialized!");
-        },
-        Commands::Add { .. } => {
+        }
+        Commands::Add { hook, command } => {
+            config.add_command(&hook, command)?;
+            config.save(&git_root)?;
+            hooks::install_hook(&git_root, &hook)?;
             println!("✓ Command added.");
-        },
-        Commands::Run { .. } => {
-            unimplemented!("Running hook");
+        }
+        Commands::Run { hook } => {
+            hooks::run_hook(&hook, &config)?;
         }
         Commands::Status => {
             if config.hooks.is_empty() {

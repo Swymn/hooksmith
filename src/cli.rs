@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand};
 #[command(name = "hooksmith", about = "Git hooks manager", version)]
 pub struct Cli {
     #[command(subcommand)]
-    pub command: Commands
+    pub command: Commands,
 }
 
 #[derive(Subcommand)]
@@ -21,9 +21,7 @@ pub enum Commands {
     },
 
     /// Execute commands of a specific hook
-    Run {
-        hook: String,
-    },
+    Run { hook: String },
 
     /// Display current config
     Status,

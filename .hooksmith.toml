@@ -1,2 +1,5 @@
 [hooks.pre-commit]
-commands = ["cargo fmt --check", "cargo test"]
+commands = [
+    "cargo fmt --check",
+    "cargo test",
+]

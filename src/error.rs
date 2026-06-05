@@ -15,7 +15,10 @@ pub enum HooksmithError {
     Io(#[from] io::Error),
 
     #[error("Unknown Hook ({0})")]
-    UnknownHook(String)
+    UnknownHook(String),
+
+    #[error("Command {command} failed with code {code}")]
+    CommandFailed { command: String, code: i32 },
 }
 
 pub type Result<T> = result::Result<T, HooksmithError>;
